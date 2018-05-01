@@ -2,9 +2,13 @@ package com.example.mircea.movieapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -17,6 +21,7 @@ import android.widget.TextView;
 import com.example.mircea.movieapp.Adapter.MovieAdapter;
 import com.example.mircea.movieapp.Adapter.ReviewsAdapter;
 import com.example.mircea.movieapp.Adapter.TrailerAdapter;
+import com.example.mircea.movieapp.data.MoviesContract;
 import com.example.mircea.movieapp.model.Movie;
 import com.example.mircea.movieapp.model.Review;
 import com.example.mircea.movieapp.model.Trailers;
@@ -34,7 +39,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class DetailActivity extends AppCompatActivity
-        implements TrailerAdapter.TrailerAdapterOnClickHandler, ReviewsAdapter.ReviewAdapterOnClickHandler {
+        implements TrailerAdapter.TrailerAdapterOnClickHandler, ReviewsAdapter.ReviewAdapterOnClickHandler, LoaderManager.LoaderCallbacks<Cursor> {
 
     @BindView(R.id.image_iv)
     ImageView mImageDetail;
@@ -58,12 +63,57 @@ public class DetailActivity extends AppCompatActivity
     public static ArrayList<Trailers> mTrailersData = null;
     public static ArrayList<Review> mReviewsData = null;
 
+
     public String textEntered = null;
     private Context mContext;
     String idx = null;
     /*   @BindView(R.id.pb_loading_indicator)
        ProgressBar mLoadingIndicator;*/
     String searchUrl;
+    // Declare a private Uri field called mUri
+    /* The URI that is used to access the chosen movie details */
+    private Uri mUri;
+
+
+    //Create a String array containing the names of the desired data columns from our ContentProvider
+    /*
+     * The columns of data that we are interested in displaying within our MainActivity's list of
+     * weather data.
+     */
+    public static final String[] MAIN_FORECAST_PROJECTION = {
+            MoviesContract.MovieEntry.COLUMN_MOVIE_ID,
+            MoviesContract.MovieEntry.COLUMN_POSTER_PATH,
+            MoviesContract.MovieEntry.COLUMN_OVERVIEW,
+            MoviesContract.MovieEntry.COLUMN_VOTE_AVERAGE,
+            MoviesContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MoviesContract.MovieEntry.COLUMN_TITLE,
+            MoviesContract.MovieEntry.COLUMN_PRIORITY,
+
+    };
+
+    //Create constant int values representing each column name's position above
+    /*
+     * We store the indices of the values in the array of Strings above to more quickly be able to
+     * access the data from our query. If the order of the Strings above changes, these indices
+     * must be adjusted to match the order of the Strings.
+     */
+    public static final int INDEX_MOVIE_MOVIE_ID = 0;
+    public static final int INDEX_MOVIE_POSTER_PATH = 1;
+    public static final int INDEX_MOVIE_OVERVIEW = 2;
+    public static final int INDEX_MOVIE_VOTE_AVERAGE = 3;
+    public static final int INDEX_MOVIE_RELEASE_DATE = 4;
+    public static final int INDEX_MOVIE_TITLE = 5;
+    public static final int INDEX_MOVIE_PRIORITY = 6;
+
+    // Create a constant int to identify our loader used in DetailActivity
+    /*
+     * This ID will be used to identify the Loader responsible for loading the movie details
+     * for a particular movie. In some cases, one Activity can deal with many Loaders. However, in
+     * our case, there is only one. We will still use this ID to initialize the loader and create
+     * the loader for best practice. Please note that 353 was chosen arbitrarily. You can use
+     * whatever number you like, so long as it is unique and consistent.
+     */
+    private static final int ID_DETAIL_LOADER = 353;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,50 +123,22 @@ public class DetailActivity extends AppCompatActivity
         Intent intentThatStartedThisActivity = getIntent();
         if (intentThatStartedThisActivity.hasExtra(Intent.EXTRA_TEXT)) {
             textEntered = intentThatStartedThisActivity.getStringExtra(Intent.EXTRA_TEXT);
-            mOriginalTitle.setText(movieResultsData.get(Integer.parseInt(textEntered)).getOriginalTitle());
-            mOverview.setText(movieResultsData.get(Integer.parseInt(textEntered)).getOverview());
-            mReleaseDate.setText(movieResultsData.get(Integer.parseInt(textEntered)).getReleaseDate());
-            mVoteAverage.setText(movieResultsData.get(Integer.parseInt(textEntered)).getVote_average());
-       /*     Picasso.get().load(movieResultsData.get(Integer.parseInt(textEntered)).getMoviePosterImageThumblail())
-                    .placeholder(R.drawable.user_placeholder1)
-                    .error(R.drawable.user_placeholder_error)
-                    .into(mImageDetail);*/
+            // Use getData to get a reference to the URI passed with this Activity's Intent
+            Log.i(LOG, "xxxxxxxxxxxxb " + textEntered);
 
-            Picasso.get()
-                    .load(movieResultsData.get(Integer.parseInt(textEntered)).getMoviePosterImageThumblail())
-                    .networkPolicy(NetworkPolicy.OFFLINE)
-                    .placeholder(R.drawable.user_placeholder)
-                    .into(mImageDetail, new Callback() {
-                        @Override
-                        public void onSuccess() {
+            mUri = getIntent().getData();
+            Log.i(LOG, "xxxxxxxxxxxxb234 " + getIntent().getData());
 
-                        }
-                        @Override
-                        public void onError(Exception e) {
-                            // Try again online, if cache loading failed
-                            Picasso.get()
-                                    .load(movieResultsData.get(Integer.parseInt(textEntered)).getMoviePosterImageThumblail())
-                                    .placeholder(R.drawable.user_placeholder)
-                                    .error(R.drawable.user_placeholder_error)
-                                    .into(mImageDetail);
-                        }
-                    });
-            idx = movieResultsData.get(Integer.parseInt(textEntered)).getId();
-            Log.i(LOG, "xxxxxxxxxxxxbidbbb " + movieResultsData.get(Integer.parseInt(textEntered)).getReleaseDate());
+            // Throw a NullPointerException if that URI is null
+            if (mUri == null)
+                throw new NullPointerException("URI for DetailActivity cannot be null");
+
 
             LinearLayoutManager layoutManager =
                     new LinearLayoutManager(DetailActivity.this, LinearLayoutManager.HORIZONTAL, false);
             mTrailers.setLayoutManager(layoutManager);
 
-     /*       LinearLayoutManager reviewLayoutManager =
-                    new LinearLayoutManager(DetailActivity.this, LinearLayoutManager.HORIZONTAL, false);
-            mReviews.setLayoutManager(reviewLayoutManager)*/
-            ;
 
-            /*
-         * Use this setting to improve performance if you know that changes in content do not
-         * change the child layout size in the RecyclerView
-         */
             mTrailers.setHasFixedSize(true);
             mAdapter = new TrailerAdapter(DetailActivity.this, new ArrayList<Trailers>(), DetailActivity.this);
             mTrailers.setAdapter(mAdapter);
@@ -126,7 +148,8 @@ public class DetailActivity extends AppCompatActivity
             mReviews.setAdapter(mReviewAdapter);
 */
 
-
+            /* This connects our Activity into the loader lifecycle. */
+            getSupportLoaderManager().initLoader(ID_DETAIL_LOADER, null, this);
             getSupportLoaderManager().initLoader(0, null, TrailerLoaderListener);
             getSupportLoaderManager().initLoader(1, null, ReviewsResultLoaderListener);
 
@@ -135,68 +158,6 @@ public class DetailActivity extends AppCompatActivity
     }
 
 
-    private LoaderManager.LoaderCallbacks<String[]> TrailerResultLoaderListener
-            = new LoaderManager.LoaderCallbacks<String[]>() {
-
-        @Override
-        public Loader<String[]> onCreateLoader(int id, Bundle args) {
-            return new AsyncTaskLoader<String[]>(DetailActivity.this) {
-                String[] mTrailerData = null;
-
-                @Override
-                protected void onStartLoading() {
-                    if (mTrailerData != null) {
-                        deliverResult(mTrailerData);
-                    } else {
-                        // mLoadingIndicator.setVisibility(View.VISIBLE);
-                        forceLoad();
-                    }
-                }
-
-                @Override
-                public String[] loadInBackground() {
-                    URL TrailerRequestUrl = JsonUtils.createUrl(JsonUtils.buildUrl(idx + "/videos").toString());
-                    String TrailerSearchResults = null;
-
-
-                    try {
-
-                        TrailerSearchResults = JsonUtils
-                                .getResponseFromHttpUrl(TrailerRequestUrl);
-
-                        String[] TrailerResultData = OpenMovieJsonUtils.getSimpleTrailersStringsFromJson(TrailerSearchResults);
-
-                        return TrailerResultData;
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-
-                /**
-                 * Sends the result of the load to the registered listener.
-                 *
-                 * @param data The result of the load
-                 */
-
-                public void deliverResult(String[] data) {
-                    mTrailerData = data;
-                    super.deliverResult(data);
-                }
-            };
-        }
-
-        @Override
-        public void onLoadFinished(Loader<String[]> loader, String[] data) {
-            Log.i(LOG, "xxxxxxxxxxxxb2 " + data[0].toString());
-        }
-
-        @Override
-        public void onLoaderReset(Loader<String[]> loader) {
-
-        }
-    };
     private LoaderManager.LoaderCallbacks<String[]> ReviewsResultLoaderListener
             = new LoaderManager.LoaderCallbacks<String[]>() {
         @Override
@@ -216,7 +177,7 @@ public class DetailActivity extends AppCompatActivity
 
                 @Override
                 public String[] loadInBackground() {
-                    URL ReviewsRequestUrl = JsonUtils.createUrl(JsonUtils.buildUrl(idx + "/reviews").toString());
+                    URL ReviewsRequestUrl = JsonUtils.createUrl(JsonUtils.buildUrl(textEntered + "/reviews").toString());
                     String ReviewsSearchResults = null;
 
 
@@ -262,55 +223,7 @@ public class DetailActivity extends AppCompatActivity
 
         }
     };
-    private LoaderManager.LoaderCallbacks<ArrayList<Review>> ReviewsLoaderListener
-            = new LoaderManager.LoaderCallbacks<ArrayList<Review>>() {
 
-        @Override
-        public Loader<ArrayList<Review>> onCreateLoader(int id, Bundle args) {
-            return new AsyncTaskLoader<ArrayList<Review>>(DetailActivity.this) {
-                @Override
-                protected void onStartLoading() {
-                    forceLoad();
-                }
-
-                @Override
-                public ArrayList<Review> loadInBackground() {
-                    URL ReviewRequestUrl = JsonUtils.createUrl(JsonUtils.buildUrl(idx + "/reviews").toString());
-                    String reviewSearchResults = null;
-                    ArrayList<Review> trailerResultData = new ArrayList<>();
-
-                    try {
-                        reviewSearchResults = JsonUtils
-                                .getResponseFromHttpUrl(ReviewRequestUrl);
-                        trailerResultData.addAll(OpenMovieJsonUtils.parseReviewsJson(reviewSearchResults));
-
-                        return trailerResultData;
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-
-                public void deliverResult(ArrayList<Review> data) {
-                    mReviewsData = data;
-                    super.deliverResult(data);
-                }
-            };
-        }
-
-        @Override
-        public void onLoadFinished(Loader<ArrayList<Review>> loader, ArrayList<Review> data) {
-            mReviewAdapter.setReviewsData(data);
-
-
-        }
-
-        @Override
-        public void onLoaderReset(Loader<ArrayList<Review>> loader) {
-
-        }
-    };
 
     private LoaderManager.LoaderCallbacks<ArrayList<Trailers>> TrailerLoaderListener
             = new LoaderManager.LoaderCallbacks<ArrayList<Trailers>>() {
@@ -331,7 +244,7 @@ public class DetailActivity extends AppCompatActivity
 
                 @Override
                 public ArrayList<Trailers> loadInBackground() {
-                    URL TrailerRequestUrl = JsonUtils.createUrl(JsonUtils.buildUrl(idx + "/videos").toString());
+                    URL TrailerRequestUrl = JsonUtils.createUrl(JsonUtils.buildUrl(textEntered + "/videos").toString());
                     String trailerSearchResults = null;
                     ArrayList<Trailers> trailerResultData = new ArrayList<>();
 
@@ -389,5 +302,133 @@ public class DetailActivity extends AppCompatActivity
 
     }
 
+    // Override onCreateLoader
 
+    /**
+     * Creates and returns a CursorLoader that loads the data for our URI and stores it in a Cursor.
+     *
+     * @param loaderId   The loader ID for which we need to create a loader
+     * @param loaderArgs Any arguments supplied by the caller
+     * @return A new Loader instance that is ready to start loading.
+     */
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, @Nullable Bundle loaderArgs) {
+        switch (loaderId) {
+
+//         If the loader requested is our detail loader, return the appropriate CursorLoader
+            case ID_DETAIL_LOADER:
+
+                return new CursorLoader(this,
+                        mUri,
+                        MAIN_FORECAST_PROJECTION,
+                        null,
+                        null,
+                        null);
+
+            default:
+                throw new RuntimeException("Loader Not Implemented: " + loaderId);
+        }
+    }
+    //Override onLoadFinished
+
+    /**
+     * Runs on the main thread when a load is complete. If initLoader is called (we call it from
+     * onCreate in DetailActivity) and the LoaderManager already has completed a previous load
+     * for this Loader, onLoadFinished will be called immediately. Within onLoadFinished, we bind
+     * the data to our views so the user can see the details of the weather on the date they
+     * selected from the forecast.
+     *
+     * @param loader The cursor loader that finished.
+     * @param data   The cursor that is being returned.
+     */
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, final Cursor data) {
+        //  Check before doing anything that the Cursor has valid data
+        /*
+         * Before we bind the data to the UI that will display that data, we need to check the
+         * cursor to make sure we have the results that we are expecting. In order to do that, we
+         * check to make sure the cursor is not null and then we call moveToFirst on the cursor.
+         * Although it may not seem obvious at first, moveToFirst will return true if it contains
+         * a valid first row of data.
+         *
+         * If we have valid data, we want to continue on to bind that data to the UI. If we don't
+         * have any data to bind, we just return from this method.
+         */
+
+
+        boolean cursorHasValidData = false;
+        if (data != null && data.moveToFirst()) {
+            /* We have valid data, continue on to bind the data to the UI */
+            cursorHasValidData = true;
+        }
+        if (!cursorHasValidData) {
+            /* No data to display, simply return and do nothing */
+            return;
+        }
+
+        /****************
+         * Movie OriginalTitle *
+         ****************/
+        /*
+         * Read the OriginalTitle from the cursor.
+         */
+        mOriginalTitle.setText(data.getString(INDEX_MOVIE_TITLE));
+
+
+        /****************
+         * Movie Overview *
+         ****************/
+        mOverview.setText(data.getString(INDEX_MOVIE_OVERVIEW));
+        /****************
+         * Movie ReleaseDate *
+         ****************/
+        mReleaseDate.setText(data.getString(INDEX_MOVIE_RELEASE_DATE));
+        /****************
+         * Movie VoteAverage *
+         ****************/
+        mVoteAverage.setText(data.getString(INDEX_MOVIE_VOTE_AVERAGE));
+        /****************
+         * Movie ImageDetail *
+         ****************/
+        Picasso.get()
+                .load(data.getString(INDEX_MOVIE_POSTER_PATH))
+                .networkPolicy(NetworkPolicy.OFFLINE)
+                .placeholder(R.drawable.user_placeholder)
+                .into(mImageDetail, new Callback() {
+                    @Override
+                    public void onSuccess() {
+
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        // Try again online, if cache loading failed
+                        Picasso.get()
+                                .load(data.getString(INDEX_MOVIE_POSTER_PATH))
+                                .placeholder(R.drawable.user_placeholder)
+                                .error(R.drawable.user_placeholder_error)
+                                .into(mImageDetail);
+                    }
+                });
+        /****************
+         * Movie ID *
+         ****************/
+        idx = data.getString(INDEX_MOVIE_MOVIE_ID);
+
+
+    }
+    //Override onLoaderReset, but don't do anything in it yet
+
+    /**
+     * Called when a previously created loader is being reset, thus making its data unavailable.
+     * The application should at this point remove any references it has to the Loader's data.
+     * Since we don't store any of this cursor's data, there are no references we need to remove.
+     *
+     * @param loader The Loader that is being reset.
+     */
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
+    }
 }

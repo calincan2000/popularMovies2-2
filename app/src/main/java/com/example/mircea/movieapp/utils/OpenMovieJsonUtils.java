@@ -1,7 +1,10 @@
 package com.example.mircea.movieapp.utils;
 
+import android.content.ContentValues;
+import android.content.Context;
 import android.util.Log;
 
+import com.example.mircea.movieapp.data.MoviesContract;
 import com.example.mircea.movieapp.model.Movie;
 import com.example.mircea.movieapp.model.Review;
 import com.example.mircea.movieapp.model.Trailers;
@@ -10,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,35 +34,65 @@ public final class OpenMovieJsonUtils {
     private static final String KEY = "key";
     private static final String URL = "url";
     private static final String CONTENT = "content";
+    private static final String OWM_MESSAGE_CODE = "cod";
 
 
-    public static List<Movie> parseMovieJson(String json) throws JSONException {
-        Movie movie = null;
-        List<Movie> movies = null;
-        String base = "http://image.tmdb.org/t/p/w185/";
-        movies = new ArrayList<>();
+    public static ContentValues[] getWeatherContentValuesFromJson(Context context, String json)
+            throws JSONException {
+
+        String base = "http://image.tmdb.org/t/p/w185";
+
 
         JSONObject forecastJson = new JSONObject(json);
+
+         /* Is there an error? */
+        if (forecastJson.has(OWM_MESSAGE_CODE)) {
+            int errorCode = forecastJson.getInt(OWM_MESSAGE_CODE);
+
+            switch (errorCode) {
+                case HttpURLConnection.HTTP_OK:
+                    break;
+                case HttpURLConnection.HTTP_NOT_FOUND:
+                    //* Location invalid *//*
+                    return null;
+                default:
+                    //* Server probably down *//*
+                    return null;
+            }
+        }
+
+
         JSONArray movieArray = forecastJson.getJSONArray(OWN_LIST);
+        ContentValues[] movieContentValues = new ContentValues[movieArray.length()];
+
+
         for (int i = 0; i < movieArray.length(); i++) {
 
             JSONObject currentMovie = movieArray.getJSONObject(i);
 
             String original_title = currentMovie.optString(ORIGINAL_TITLE);
-            String poster_path = currentMovie.optString(POSTER_PATH);
+            String poster_path = base + currentMovie.optString(POSTER_PATH);
             String overview = currentMovie.optString(OVERVIEW);
             String vote_average = currentMovie.optString(VOTE_AVERAGE);
             String release_date = currentMovie.optString(RELEASE_DATE);
             String id = currentMovie.optString(ID);
 
-            movie = new Movie(original_title, base + poster_path, overview, vote_average, release_date, id);
-            movies.add(movie);
+            ContentValues movieValues = new ContentValues();
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_TITLE, original_title);
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_POSTER_PATH, poster_path);
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_OVERVIEW, overview);
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_VOTE_AVERAGE, vote_average);
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_RELEASE_DATE, release_date);
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_MOVIE_ID, id);
+            movieValues.put(MoviesContract.MovieEntry.COLUMN_PRIORITY, 1);
 
+            movieContentValues[i] = movieValues;
 
 
         }
 
-        return movies;
+
+        return movieContentValues;
 
     }
 
@@ -121,7 +155,7 @@ public final class OpenMovieJsonUtils {
         for (int i = 0; i < movieArray.length(); i++) {
 
             JSONObject currentMovie = movieArray.getJSONObject(i);
-            String content= currentMovie.optString(CONTENT);
+            String content = currentMovie.optString(CONTENT);
             String url = currentMovie.optString(URL);
 
 
@@ -155,7 +189,6 @@ public final class OpenMovieJsonUtils {
                 Log.i(LOG, "xxxxxxxxxxxxb1 " + currentMovie.optString(CONTENT));
 
 
-
             }
 
             return parsedTrailersData;
@@ -166,6 +199,36 @@ public final class OpenMovieJsonUtils {
             return parsedTrailersData;
 
         }
+    }
+
+    public static List<Movie> parseMovieJson(String json)
+            throws JSONException {
+        Movie movie = null;
+        List<Movie> movies = null;
+        String base = "http://image.tmdb.org/t/p/w185/";
+        movies = new ArrayList<>();
+
+        JSONObject forecastJson = new JSONObject(json);
+        JSONArray movieArray = forecastJson.getJSONArray(OWN_LIST);
+        for (int i = 0; i < movieArray.length(); i++) {
+
+            JSONObject currentMovie = movieArray.getJSONObject(i);
+
+            String original_title = currentMovie.optString(ORIGINAL_TITLE);
+            String poster_path = currentMovie.optString(POSTER_PATH);
+            String overview = currentMovie.optString(OVERVIEW);
+            String vote_average = currentMovie.optString(VOTE_AVERAGE);
+            String release_date = currentMovie.optString(RELEASE_DATE);
+            String id = currentMovie.optString(ID);
+
+            movie = new Movie(original_title, base + poster_path, overview, vote_average, release_date, id);
+            movies.add(movie);
+
+
+        }
+
+        return movies;
+
     }
 
 }
