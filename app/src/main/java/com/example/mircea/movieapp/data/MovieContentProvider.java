@@ -209,7 +209,7 @@ public class MovieContentProvider extends ContentProvider {
                 MoviesUpdated = db.update(MoviesContract.MovieEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
             default:
-                throw new UnsupportedOperationException("Unknown uri  BLABLA: " + uri);
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
 
         if (MoviesUpdated != 0) {

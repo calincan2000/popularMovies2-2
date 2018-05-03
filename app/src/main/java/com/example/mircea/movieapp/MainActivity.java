@@ -55,6 +55,8 @@ public class MainActivity extends AppCompatActivity implements
     private int mPosition = RecyclerView.NO_POSITION;
     public static String TopRated2 = "TopRated";
     public static String MostPopular2 = "MostPopular";
+    public static String FavoritesCollection = "FavoritesCollection";
+
     public static String TopRated = "top_rated";
     public static String MostPopular = "popular";
     public String selection = TopRated2;
@@ -301,7 +303,11 @@ public class MainActivity extends AppCompatActivity implements
                 selection = MostPopular2;
                 getSupportLoaderManager().restartLoader(ID_FORECAST_LOADER, null, this);
                 return true;
-
+            case R.id.favorites_collection:
+                mMovieData = null;
+                selection = FavoritesCollection;
+                getSupportLoaderManager().restartLoader(ID_FORECAST_LOADER, null, this);
+                return true;
         }
 
 

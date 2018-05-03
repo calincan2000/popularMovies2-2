@@ -18,6 +18,10 @@
         android:id="@+id/top_rated"
         android:orderInCategory="3"
         android:title="@string/TopRated" />
+    <item
+        android:id="@+id/favorites_collection"
+        android:orderInCategory="4"
+        android:title="@string/FavoritesCollection" />
 
 
 </menu>

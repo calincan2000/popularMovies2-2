@@ -5,6 +5,7 @@
     <string name="Reset">Reset</string>
     <string name="MostPopular">Most Popular</string>
     <string name="TopRated">Top Rated</string>
+    <string name="FavoritesCollection">Favorites Collection</string>
     <string name="error_message">Failed to get results, please try again.</string>
 
     <!-- Detail Activity-->

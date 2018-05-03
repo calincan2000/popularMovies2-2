@@ -58,7 +58,6 @@ public class MoviesContract {
         public static final String COLUMN_REQUEST = "request";                                 // Type: TEXT
 
 
-
         /* The base CONTENT_URI used to query the reviews table from the content provider */
         public static final Uri CONTENT_URI =
                 BASE_CONTENT_URI.buildUpon()
@@ -70,7 +69,7 @@ public class MoviesContract {
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + AUTHORITY + "/" + PATH_MOVIES;
         // create cursor of base type item for single entry
         public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE +"/" + AUTHORITY + "/" + PATH_MOVIES;
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + AUTHORITY + "/" + PATH_MOVIES;
 
         // for building URIs on insertion
         public static Uri buildMoviesUri(long id) {
@@ -92,13 +91,13 @@ public class MoviesContract {
         }
 
         /**
-         *
-         *
          * @return The selection part of the reviews query for request
          */
         public static String getSqlSelectForRequest(String S) {
-
-            return MoviesContract.MovieEntry.COLUMN_REQUEST+ " like '%" + S + "%'";
+            if (S == "FavoritesCollection")
+                return MovieEntry.COLUMN_PRIORITY + " >= " + 1 ;
+            else
+                return MoviesContract.MovieEntry.COLUMN_REQUEST + " like '%" + S + "%'";
         }
 
     }
