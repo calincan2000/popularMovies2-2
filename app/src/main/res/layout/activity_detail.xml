@@ -12,6 +12,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+
+        <ImageButton
+            android:id="@+id/mRatingBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="8dp"
+            android:background="#00ffffff"
+            android:onClick="onClickAddTask"
+            android:src="@drawable/star"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginRight="8dp" />
+
         <TextView
             android:id="@+id/original_title"
             android:layout_width="0dp"

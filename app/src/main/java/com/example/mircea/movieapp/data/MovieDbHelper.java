@@ -13,7 +13,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     //The name of the database
     private static final String DATABASE_NAME = "reviews.db";
     // If you change the database schema, you must increment the database version
-    private static final int VERSION = 7;
+    private static final int VERSION = 23;
 
     public MovieDbHelper(Context context) {
         super(context, DATABASE_NAME, null, VERSION);
@@ -42,8 +42,8 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                 MovieEntry.COLUMN_VOTE_AVERAGE + " TEXT NOT NULL, " +
                 MovieEntry.COLUMN_RELEASE_DATE + " TEXT NOT NULL, " +
                 MovieEntry.COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
-            /*    " UNIQUE (" + MovieEntry.COLUMN_MOVIE_ID + ") ON CONFLICT REPLACE, "+*/
-                MovieEntry.COLUMN_PRIORITY + " INTEGER NOT NULL);";
+                MovieEntry.COLUMN_PRIORITY + " INTEGER NOT NULL, " +
+                MovieEntry.COLUMN_REQUEST + " TEXT NOT NULL);";
          /*
          * After we've spelled out our SQLite table creation statement above, we actually execute
          * that SQL with the execSQL method of our SQLite database object.

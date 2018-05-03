@@ -1,5 +1,6 @@
 package com.example.mircea.movieapp;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -8,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
@@ -15,8 +17,11 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.mircea.movieapp.Adapter.MovieAdapter;
 import com.example.mircea.movieapp.Adapter.ReviewsAdapter;
@@ -55,21 +60,19 @@ public class DetailActivity extends AppCompatActivity
     RecyclerView mTrailers;
     @BindView(R.id.reviews)
     TextView mReviews;
+    @BindView(R.id.mRatingBar)
+    ImageView mRatingBar;
 
-    private ReviewsAdapter mReviewAdapter;
     private TrailerAdapter mAdapter;
     private static final String LOG = MovieAdapter.class.getSimpleName();
-    public List<Movie> movieResultsData = MainActivity.mMovieData;
     public static ArrayList<Trailers> mTrailersData = null;
-    public static ArrayList<Review> mReviewsData = null;
 
 
     public String textEntered = null;
     private Context mContext;
     String idx = null;
-    /*   @BindView(R.id.pb_loading_indicator)
-       ProgressBar mLoadingIndicator;*/
-    String searchUrl;
+    long _id = 0;
+    int fav = 1;
     // Declare a private Uri field called mUri
     /* The URI that is used to access the chosen movie details */
     private Uri mUri;
@@ -88,6 +91,8 @@ public class DetailActivity extends AppCompatActivity
             MoviesContract.MovieEntry.COLUMN_RELEASE_DATE,
             MoviesContract.MovieEntry.COLUMN_TITLE,
             MoviesContract.MovieEntry.COLUMN_PRIORITY,
+            MoviesContract.MovieEntry._ID
+
 
     };
 
@@ -104,6 +109,7 @@ public class DetailActivity extends AppCompatActivity
     public static final int INDEX_MOVIE_RELEASE_DATE = 4;
     public static final int INDEX_MOVIE_TITLE = 5;
     public static final int INDEX_MOVIE_PRIORITY = 6;
+    public static final int INDEX_MOVIE_ID = 7;
 
     // Create a constant int to identify our loader used in DetailActivity
     /*
@@ -143,10 +149,10 @@ public class DetailActivity extends AppCompatActivity
             mAdapter = new TrailerAdapter(DetailActivity.this, new ArrayList<Trailers>(), DetailActivity.this);
             mTrailers.setAdapter(mAdapter);
 
-        /*    mReviews.setHasFixedSize(true);
-            mReviewAdapter= new ReviewsAdapter(DetailActivity.this,new ArrayList<Review>(),DetailActivity.this);
-            mReviews.setAdapter(mReviewAdapter);
-*/
+
+
+
+
 
             /* This connects our Activity into the loader lifecycle. */
             getSupportLoaderManager().initLoader(ID_DETAIL_LOADER, null, this);
@@ -302,6 +308,38 @@ public class DetailActivity extends AppCompatActivity
 
     }
 
+
+    /**
+     * onClickAddTask is called when the "ADD" button is clicked.
+     * It retrieves user input and inserts that new task data into the underlying database.
+     */
+    public void onClickAddTask(View view) {
+
+        // Insert new Movie data via a ContentResolver
+
+
+        ContentValues mUpdateValues = new ContentValues();
+        // Defines selection criteria for the rows you want to update
+        /*
+         * Sets the updated value and updates the selected words.
+         */
+
+        if (fav == 0) {
+            mRatingBar.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), android.R.drawable.btn_star_big_on));
+            mUpdateValues.put(MoviesContract.MovieEntry.COLUMN_PRIORITY, 1);
+        } else {
+            mRatingBar.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), android.R.drawable.btn_star_big_off));
+            mUpdateValues.put(MoviesContract.MovieEntry.COLUMN_PRIORITY, 0);
+        }
+        int mRowsUpdated = getContentResolver().update(
+                MoviesContract.MovieEntry.buildMoviesUri(_id),
+                mUpdateValues,
+                MoviesContract.MovieEntry._ID+"=?",
+                new String[] {String.valueOf(_id)});
+
+
+    }
+
     // Override onCreateLoader
 
     /**
@@ -416,6 +454,20 @@ public class DetailActivity extends AppCompatActivity
          ****************/
         idx = data.getString(INDEX_MOVIE_MOVIE_ID);
 
+        /****************
+         * Movie PRIORITY *
+         ****************/
+        fav = data.getInt(INDEX_MOVIE_PRIORITY);
+        if (fav == 0) {
+            mRatingBar.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), android.R.drawable.btn_star_big_off));
+        } else {
+            mRatingBar.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), android.R.drawable.btn_star_big_on));
+        }
+
+        /****************
+         * Movie _ID *
+         ****************/
+       _id= data.getInt(INDEX_MOVIE_ID);
 
     }
     //Override onLoaderReset, but don't do anything in it yet

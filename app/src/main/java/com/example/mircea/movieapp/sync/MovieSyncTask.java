@@ -38,14 +38,20 @@ public class MovieSyncTask {
              * movies. It will decide whether to create a URL .
              */
             URL movieRequestUrl = JsonUtils.createUrl(JsonUtils.buildUrl(MainActivity.TopRated).toString());
+            URL movieRequestUrl2 = JsonUtils.createUrl(JsonUtils.buildUrl(MainActivity.MostPopular).toString());
 
             /* Use the URL to retrieve the JSON */
             String jsonMovieResponse = JsonUtils.getResponseFromHttpUrl(movieRequestUrl);
+            String jsonMovieResponse2 = JsonUtils.getResponseFromHttpUrl(movieRequestUrl2);
 
             /* Parse the JSON into a list of movies values */
-            ContentValues[] moviesValues = OpenMovieJsonUtils.getWeatherContentValuesFromJson(
+            ContentValues[] moviesValues = OpenMovieJsonUtils.getMovieContentValuesFromJson(
                     context,
-                    jsonMovieResponse);
+                    jsonMovieResponse,
+                    jsonMovieResponse2
+                    );
+
+
 
             /*
              * In cases where our JSON contained an error code, getMovieContentValuesFromJson

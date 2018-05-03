@@ -53,9 +53,11 @@ public class MainActivity extends AppCompatActivity implements
     public static ArrayList<Movie> mMovieData = null;
     private static final int FORECAST_LOADER_ID = 0;
     private int mPosition = RecyclerView.NO_POSITION;
+    public static String TopRated2 = "TopRated";
+    public static String MostPopular2 = "MostPopular";
     public static String TopRated = "top_rated";
     public static String MostPopular = "popular";
-    public String searchUrl = JsonUtils.buildUrl(TopRated).toString();
+    public String selection = TopRated2;
 
     //Create a String array containing the names of the desired data columns from our ContentProvider
     /*
@@ -124,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements
         showLoading();
 
 
-        Log.i(LOG, "xxxxxxxxxxxxbyyyyy " +  MoviesContract.MovieEntry.CONTENT_URI);
+
 
         /*
          * Ensures a loader is initialized and active. If the loader doesn't already exist, one is
@@ -132,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements
          * the last created loader is re-used.
          */
         getSupportLoaderManager().initLoader(ID_FORECAST_LOADER, null, this);
-        MovieSyncUtils.initialize(this);
+       MovieSyncUtils.initialize(this);
 
     }
 
@@ -177,17 +179,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onClick(String movieItem, String movieItem2) {
 
-        /*    public void onClick(long date) {
-        Intent weatherDetailIntent = new Intent(MainActivity.this, DetailActivity.class);
-//      COMPLETED (39) Refactor onClick to pass the URI for the clicked date with the Intent
-        Uri uriForMovieIdClicked = WeatherContract.WeatherEntry.buildWeatherUriWithDate(date);
-        weatherDetailIntent.setData(uriForMovieIdClicked);
-        startActivity(weatherDetailIntent);
-    }*/
+
         Context context = this;
-        //  Toast.makeText(this, movieItem, Toast.LENGTH_LONG).show();
-
-
         Class destinationActivity = DetailActivity.class;
         Intent intent = new Intent(context, destinationActivity);
         //Refactor onClick to pass the URI for the clicked movie_ID with the Intent
@@ -214,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, @Nullable Bundle bundle) {
 
-
+        MovieSyncUtils.initialize(this);
         switch (loaderId) {
             //) If the loader requested is our forecast loader, return the appropriate CursorLoader
             case ID_FORECAST_LOADER:
@@ -228,14 +221,12 @@ public class MainActivity extends AppCompatActivity implements
                  * We created a handy method to do that in our WeatherEntry class.
                  */
                 // String selection = MoviesContract.MovieEntry;
-
                 return new CursorLoader(this,
                         forecastQueryUri,
                         MAIN_FORECAST_PROJECTION,
-                        null,
+                        MoviesContract.MovieEntry.getSqlSelectForRequest(selection),
                         null,
                         sortOrder);
-
             default:
                 throw new RuntimeException("Loader Not Implemented: " + loaderId);
         }
@@ -263,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements
         if(mPosition==RecyclerView.NO_POSITION)
             mPosition=0;
      //Smooth scroll the RecyclerView to mPosition
-        mMoviesList.smoothScrollToPosition(mPosition);
+     //mMoviesList.smoothScrollToPosition(mPosition);
      // If the Cursor's size is not equal to mPosition
         if(data.getCount()!=0)
             showJsonData();
@@ -271,7 +262,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-//      Call mAdapter's swapCursor method and pass in null
+     //Call mAdapter's swapCursor method and pass in null
         /*
          * Since this Loader's data is now invalid, we need to clear the Adapter that is
          * displaying the data.
@@ -299,16 +290,16 @@ public class MainActivity extends AppCompatActivity implements
                 return true;*/
             case R.id.top_rated:
                 mMovieData = null;
-                searchUrl = JsonUtils.buildUrl(TopRated).toString();
-                Log.i(LOG, "xxxxxxxxxxxxb " + searchUrl);
+                selection = TopRated2;
+                Log.i(LOG, "xxxxxxxxxxxxb " + selection);
 
-                getSupportLoaderManager().restartLoader(FORECAST_LOADER_ID, null, this);
+                getSupportLoaderManager().restartLoader(ID_FORECAST_LOADER, null, this);
                 return true;
 
             case R.id.most_popular:
                 mMovieData = null;
-                searchUrl = JsonUtils.buildUrl(MostPopular).toString();
-                getSupportLoaderManager().restartLoader(FORECAST_LOADER_ID, null, this);
+                selection = MostPopular2;
+                getSupportLoaderManager().restartLoader(ID_FORECAST_LOADER, null, this);
                 return true;
 
         }

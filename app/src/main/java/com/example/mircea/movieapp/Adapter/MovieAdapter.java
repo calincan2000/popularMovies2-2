@@ -12,6 +12,7 @@ import android.view.View.OnClickListener;
 
 import com.example.mircea.movieapp.MainActivity;
 import com.example.mircea.movieapp.R;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
@@ -86,18 +87,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
 
     @Override
     public void onBindViewHolder(final MovieAdapterViewHolder holder, int position) {
-        //final Movie movieItem = mMoviesList.get(position);
-        // Log.i(LOG, "#" + position);
-        //holder.gridItemMovieView.setText(movieItem);
-    /*    Picasso.get().load(movieItem.getMoviePosterImageThumblail())
-                .placeholder(R.drawable.user_placeholder1)
-                .error(R.drawable.user_placeholder_error1)
-                .into(holder.gridItemMovieView);
-*/
-        // Try loading image from device memory or cache*/
-        //Move the cursor to the appropriate position
+
         mCursor.moveToPosition(position);
-        Log.i(LOG, "xxxxxxxxxxxxb ccccccc " + mCursor.getString(MainActivity.INDEX_MOVIE_MOVIE_ID));
+
 
         Picasso.get()
                 .load(mCursor.getString(MainActivity.INDEX_MOVIE_POSTER_PATH))

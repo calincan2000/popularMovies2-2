@@ -191,6 +191,37 @@ public class MovieContentProvider extends ContentProvider {
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+        // Update won't be used in the final ToDoList app but is implemented here for completeness
+        // This updates a single item (by it's ID) in the tasks directory
+        final SQLiteDatabase db = movieDbHelper.getWritableDatabase();
+
+        //Keep track of if an update occurs
+        int MoviesUpdated;
+
+        // match code
+        int match = sUriMatcher.match(uri);
+
+        switch (match) {
+            case CODE_MOVIES_ID:
+                //update a single task by getting the id
+                String id = uri.getPathSegments().get(1);
+                //using selections
+                MoviesUpdated = db.update(MoviesContract.MovieEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri  BLABLA: " + uri);
+        }
+
+        if (MoviesUpdated != 0) {
+            //set notifications if a task was updated
+            getContext().getContentResolver().notifyChange(uri, null);
+
+
+        }
+
+        // return number of tasks updated
+        return MoviesUpdated;
+
+
     }
 }

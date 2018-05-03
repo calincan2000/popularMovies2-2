@@ -46,8 +46,7 @@ public class MoviesContract {
 
         // Since TaskEntry implements the interface "BaseColumns", it has an automatically produced
         // "_ID" column in addition to the two below
-  /* public Movie(String originalTitle, String moviePosterImageThumblail,
-                 String overview, String vote_average, String releaseDate,String id) {*/
+
         public static final String _ID = "_id";
         public static final String COLUMN_TITLE = "originalTitle";                          // Type: TEXT
         public static final String COLUMN_POSTER_PATH = "moviePosterImageThumblail";        // Type: TEXT
@@ -56,6 +55,8 @@ public class MoviesContract {
         public static final String COLUMN_RELEASE_DATE = "releaseDate";                     // Type: TEXT
         public static final String COLUMN_MOVIE_ID = "id";                                  // Type: TEXT
         public static final String COLUMN_PRIORITY = "fav";                                 // Type: TEXT
+        public static final String COLUMN_REQUEST = "request";                                 // Type: TEXT
+
 
 
         /* The base CONTENT_URI used to query the reviews table from the content provider */
@@ -88,6 +89,16 @@ public class MoviesContract {
             return CONTENT_URI.buildUpon()
                     .appendPath(movie_ID)
                     .build();
+        }
+
+        /**
+         *
+         *
+         * @return The selection part of the reviews query for request
+         */
+        public static String getSqlSelectForRequest(String S) {
+
+            return MoviesContract.MovieEntry.COLUMN_REQUEST+ " like '%" + S + "%'";
         }
 
     }
